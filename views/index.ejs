@@ -1,0 +1,120 @@
+<%- include('partials/header') %>
+    <%- include('partials/navbar') %>
+
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+            <div class="container hero-content">
+                <h1>Hello, I'm <br><span>Mahesh Devkar</span></h1>
+                <p>A passionate Full Stack Developer building modern web applications.</p>
+                <a href="#projects" class="btn">View My Work</a>
+                <a href="/mahesh.pdf" class="btn btn-outline" download>Download
+                    Resume</a>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about">
+            <div class="container">
+                <h2 class="section-title">About Me</h2>
+                <div style="max-width: 800px; margin: 0 auto; text-align: center; color: #94a3b8;">
+                    <p>I am a dedicated developer with expertise in the MERN stack. I love creating efficient, scalable,
+                        and visually appealing web applications. I am always eager to learn new technologies and improve
+                        my skills.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills">
+            <div class="container">
+                <h2 class="section-title">My Skills</h2>
+                <div class="skills-grid-bootstrap">
+                    <% if (skills.length> 0) { %>
+                        <% skills.forEach(skill=> { %>
+                            <div class="card skill-card-bootstrap">
+                                <div class="card-img-top skill-icon-container">
+                                    <i class="<%= skill.icon %>"></i>
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <%= skill.name %>
+                                    </h5>
+                                    <p class="card-text">
+                                        <span class="skill-category-badge">
+                                            <%= skill.category %>
+                                        </span>
+                                    </p>
+
+                                </div>
+                            </div>
+                            <% }); %>
+                                <% } else { %>
+                                    <p style="text-align: center; color: #94a3b8;">No skills found.</p>
+                                    <% } %>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects">
+            <div class="container">
+                <h2 class="section-title">My Projects</h2>
+                <div class="projects-grid">
+                    <% if (projects.length> 0) { %>
+                        <% projects.forEach(project=> { %>
+                            <div class="project-card">
+                                <div class="project-image">
+                                    <img src="<%= project.image %>" alt="<%= project.title %>">
+                                </div>
+                                <div class="project-info">
+                                    <h3>
+                                        <%= project.title %>
+                                    </h3>
+                                    <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem;">
+                                        <%= project.description %>
+                                    </p>
+                                    <div class="project-tags">
+                                        <% project.tags.forEach(tag=> { %>
+                                            <span class="tag">
+                                                <%= tag %>
+                                            </span>
+                                            <% }) %>
+                                    </div>
+                                    <a href="<%= project.link %>" target="_blank" class="project-link">View Project <i
+                                            class="fas fa-arrow-right"></i></a>
+                                </div>
+                            </div>
+                            <% }) %>
+                                <% } else { %>
+                                    <p style="text-align: center; grid-column: 1/-1;">No projects found.</p>
+                                    <% } %>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact">
+            <div class="container">
+                <h2 class="section-title">Get In Touch</h2>
+                <div class="contact-form">
+                    <form action="/contact" method="POST">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%; border: none; cursor: pointer;">Send
+                            Message</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <%- include('partials/footer') %>
