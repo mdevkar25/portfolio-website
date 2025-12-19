@@ -29,28 +29,23 @@
             <div class="container">
                 <h2 class="section-title">My Skills</h2>
                 <div class="skills-grid-bootstrap">
-                    <% if (skills.length> 0) { %>
-                        <% skills.forEach(skill=> { %>
-                            <div class="card skill-card-bootstrap">
-                                <div class="card-img-top skill-icon-container">
-                                    <i class="<%= skill.icon %>"></i>
-                                </div>
-                                <div class="card-body">
-                                    <h5 class="card-title">
-                                        <%= skill.name %>
-                                    </h5>
-                                    <p class="card-text">
-                                        <span class="skill-category-badge">
-                                            <%= skill.category %>
-                                        </span>
-                                    </p>
-
-                                </div>
+                    <% skills.forEach(skill=> { %>
+                        <div class="card skill-card-bootstrap">
+                            <div class="card-img-top skill-icon-container">
+                                <i class="<%= skill.icon %>"></i>
                             </div>
-                            <% }); %>
-                                <% } else { %>
-                                    <p style="text-align: center; color: #94a3b8;">No skills found.</p>
-                                    <% } %>
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <%= skill.name %>
+                                </h5>
+                                <p class="card-text">
+                                    <span class="skill-category-badge">
+                                        <%= skill.category %>
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <% }); %>
                 </div>
             </div>
         </section>

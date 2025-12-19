@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Project - Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .edit-container {
+            min-height: 100vh;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .edit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .edit-header h1 {
+            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            background: rgba(100, 116, 139, 0.1);
+            color: #94a3b8;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            transition: var(--transition);
+        }
+
+        .back-btn:hover {
+            background: rgba(100, 116, 139, 0.2);
+        }
+
+        .form-card {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .current-image {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .current-image img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            display: block;
+            margin-top: 0.5rem;
+        }
+
+        .submit-btn {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="edit-container">
+        <div class="edit-header">
+            <h1><i class="fas fa-edit"></i> Edit Project</h1>
+            <a href="/admin/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
+
+        <div class="form-card">
+            <form action="/admin/projects/edit/<%= project._id %>" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="project-title">Project Title *</label>
+                    <input type="text" id="project-title" name="title" required value="<%= project.title %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="project-description">Description *</label>
+                    <textarea id="project-description" name="description" rows="4"
+                        required><%= project.description %></textarea>
+                </div>
+
+                <div class="current-image">
+                    <strong style="color: var(--text-color);">Current Image:</strong>
+                    <img src="<%= project.image %>" alt="<%= project.title %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="project-image">Upload New Image (Optional)</label>
+                    <input type="file" id="project-image" name="image" accept="image/*" onchange="previewImage(event)">
+                    <small style="color: #94a3b8; font-size: 0.85rem;">Leave empty to keep current image. Max file size:
+                        5MB</small>
+                </div>
+
+                <div id="image-preview" style="margin: 1rem 0; display: none;">
+                    <strong style="color: var(--text-color);">New Image Preview:</strong>
+                    <img id="preview-img"
+                        style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+                </div>
+
+                <div class="form-group">
+                    <label for="project-image-url">Or use New Image URL</label>
+                    <input type="url" id="project-image-url" name="imageUrl"
+                        placeholder="https://example.com/image.jpg">
+                    <small style="color: #94a3b8; font-size: 0.85rem;">Leave empty to keep current image</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="project-tags">Tags (comma-separated) *</label>
+                    <input type="text" id="project-tags" name="tags" required value="<%= project.tags.join(', ') %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="project-link">Project Link *</label>
+                    <input type="url" id="project-link" name="link" required value="<%= project.link %>">
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-save"></i> Update Project
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

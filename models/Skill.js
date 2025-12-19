@@ -1,24 +1,21 @@
 const mongoose = require('mongoose');
 
-const SkillSchema = new mongoose.Schema({
+const skillSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     category: {
         type: String,
         required: true,
-        enum: ['Frontend', 'Backend', 'Database', 'Tools', 'Other']
-    },
-    proficiency: {
-        type: Number,
-        required: true,
-        min: 0,
-        max: 100
+        enum: ['Frontend', 'Backend', 'Database', 'Tools', 'Other'],
+        default: 'Other'
     },
     icon: {
-        type: String, // Font Awesome icon class
-        default: 'fas fa-code'
+        type: String,
+        required: true,
+        default: 'fas fa-code' // Default icon if none provided
     },
     createdAt: {
         type: Date,
@@ -26,4 +23,4 @@ const SkillSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('Skill', SkillSchema);
+module.exports = mongoose.model('Skill', skillSchema);

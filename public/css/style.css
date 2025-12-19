@@ -10,6 +10,26 @@
     --transition: all 0.3s ease;
 }
 
+.light-mode {
+    --bg-color: #f9f9ff;
+    --text-color: #1e293b;
+    --card-bg: #ffffff;
+    --nav-bg: rgba(255, 255, 255, 0.9);
+}
+
+.theme-toggle {
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    margin-left: 1.5rem;
+    transition: var(--transition);
+}
+
+.theme-toggle:hover {
+    color: var(--primary-color);
+    transform: rotate(15deg);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -463,11 +483,39 @@ section {
 /* Responsive */
 @media (max-width: 768px) {
     .nav-links {
-        display: none;
+        display: flex;
+        position: absolute;
+        right: 0px;
+        height: 92vh;
+        top: 8vh;
+        background-color: var(--nav-bg);
+        flex-direction: column;
+        align-items: center;
+        width: 50%;
+        transform: translateX(100%);
+        transition: transform 0.5s ease-in;
+        padding-top: 2rem;
+    }
+
+    .nav-links.active {
+        transform: translateX(0%);
     }
 
     .hamburger {
         display: block;
+        cursor: pointer;
+    }
+
+    .hamburger.toggle .line:nth-child(1) {
+        transform: rotate(-45deg) translate(-5px, 6px);
+    }
+
+    .hamburger.toggle .line:nth-child(2) {
+        opacity: 0;
+    }
+
+    .hamburger.toggle .line:nth-child(3) {
+        transform: rotate(45deg) translate(-5px, -6px);
     }
 
     .hero-content h1 {

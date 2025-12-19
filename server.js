@@ -4,6 +4,8 @@ const path = require('path');
 const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const session = require('express-session');
+const multer = require('multer');
+const fs = require('fs');
 
 dotenv.config();
 
@@ -26,6 +28,37 @@ app.use(session({
 // View Engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Uploads directory created');
+}
+
+// Configure Multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+        // Generate unique filename: timestamp-originalname
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + '-' + file.originalname);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: function (req, file, cb) {
+        // Accept images only
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Only image files are allowed!'), false);
+        }
+        cb(null, true);
+    }
+});
 
 const Project = require('./models/Project');
 const Skill = require('./models/Skill');
@@ -81,27 +114,26 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio
             console.log('Sample projects seeded');
         }
 
+
+
         // Seed Skills if empty
         const skillCount = await Skill.countDocuments();
         if (skillCount === 0) {
             await Skill.create([
-                // Frontend
-                { name: 'HTML5', category: 'Frontend', proficiency: 95, icon: 'fab fa-html5' },
-                { name: 'CSS3', category: 'Frontend', proficiency: 90, icon: 'fab fa-css3-alt' },
-                { name: 'JavaScript', category: 'Frontend', proficiency: 90, icon: 'fab fa-js' },
-                { name: 'React', category: 'Frontend', proficiency: 85, icon: 'fab fa-react' },
-                { name: 'Vue.js', category: 'Frontend', proficiency: 75, icon: 'fab fa-vuejs' },
-                // Backend
-                { name: 'Node.js', category: 'Backend', proficiency: 85, icon: 'fab fa-node' },
-                { name: 'Express', category: 'Backend', proficiency: 85, icon: 'fas fa-server' },
-                { name: 'Python', category: 'Backend', proficiency: 80, icon: 'fab fa-python' },
-                // Database
-                { name: 'MongoDB', category: 'Database', proficiency: 85, icon: 'fas fa-database' },
-                { name: 'MySQL', category: 'Database', proficiency: 75, icon: 'fas fa-database' },
-                // Tools
-                { name: 'Git', category: 'Tools', proficiency: 90, icon: 'fab fa-git-alt' },
-                { name: 'Docker', category: 'Tools', proficiency: 70, icon: 'fab fa-docker' },
-                { name: 'AWS', category: 'Tools', proficiency: 65, icon: 'fab fa-aws' }
+                { name: 'Java', category: 'Backend', icon: 'fab fa-java' },
+                { name: 'HTML5', category: 'Frontend', icon: 'fab fa-html5' },
+                { name: 'CSS3', category: 'Frontend', icon: 'fab fa-css3-alt' },
+                { name: 'JavaScript', category: 'Frontend', icon: 'fab fa-js' },
+                { name: 'React', category: 'Frontend', icon: 'fab fa-react' },
+                { name: 'Vue.js', category: 'Frontend', icon: 'fab fa-vuejs' },
+                { name: 'Node.js', category: 'Backend', icon: 'fab fa-node' },
+                { name: 'Express', category: 'Backend', icon: 'fas fa-server' },
+                { name: 'Python', category: 'Backend', icon: 'fab fa-python' },
+                { name: 'MongoDB', category: 'Database', icon: 'fas fa-database' },
+                { name: 'MySQL', category: 'Database', icon: 'fas fa-database' },
+                { name: 'Git', category: 'Tools', icon: 'fab fa-git-alt' },
+                { name: 'Docker', category: 'Tools', icon: 'fab fa-docker' },
+                { name: 'AWS', category: 'Tools', icon: 'fab fa-aws' }
             ]);
             console.log('Sample skills seeded');
         }
@@ -122,7 +154,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio
 app.get('/', async (req, res) => {
     try {
         const projects = await Project.find();
-        const skills = await Skill.find().sort({ category: 1, proficiency: -1 });
+        const skills = await Skill.find().sort({ category: 1, name: 1 });
         res.render('index', { projects, skills });
     } catch (err) {
         console.error(err);
@@ -199,7 +231,8 @@ app.post('/admin/login', async (req, res) => {
 app.get('/admin/dashboard', requireAuth, async (req, res) => {
     try {
         const projects = await Project.find().sort({ createdAt: -1 });
-        const skills = await Skill.find().sort({ category: 1 });
+        const skills = await Skill.find().sort({ category: 1, name: 1 });
+        console.log(`Rendering dashboard with ${projects.length} projects and ${skills.length} skills`);
         res.render('admin/dashboard', {
             projects,
             skills,
@@ -212,38 +245,128 @@ app.get('/admin/dashboard', requireAuth, async (req, res) => {
     }
 });
 
-// Add Skill
-app.post('/admin/skills/add', requireAuth, async (req, res) => {
-    try {
-        const { name, category, icon, proficiency } = req.body;
-        await Skill.create({
-            name,
-            category,
-            icon: icon || 'fas fa-code',
-            proficiency: proficiency || 80
-        });
-        res.redirect('/admin/dashboard?success=Skill added successfully');
-    } catch (error) {
-        console.error('Add skill error:', error);
-        res.redirect('/admin/dashboard?error=Failed to add skill');
-    }
-});
 
-// Add Project
-app.post('/admin/projects/add', requireAuth, async (req, res) => {
+
+// Add Project - with multer file upload handling
+const uploadProjectImage = (req, res, next) => {
+    upload.single('image')(req, res, (err) => {
+        if (err) {
+            console.error('Multer error:', err);
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.redirect('/admin/dashboard?error=File too large. Maximum size is 5MB');
+            } else if (err.message === 'Only image files are allowed!') {
+                return res.redirect('/admin/dashboard?error=Only image files are allowed (JPG, PNG, GIF, WebP)');
+            } else {
+                return res.redirect('/admin/dashboard?error=File upload error: ' + err.message);
+            }
+        }
+        next();
+    });
+};
+
+app.post('/admin/projects/add', requireAuth, uploadProjectImage, async (req, res) => {
     try {
-        const { title, description, image, tags, link } = req.body;
+        const { title, description, imageUrl, tags, link } = req.body;
+
+        // Determine image path: use uploaded file if available, otherwise use URL
+        let imagePath;
+        if (req.file) {
+            // File was uploaded
+            imagePath = '/uploads/' + req.file.filename;
+        } else if (imageUrl && imageUrl.trim()) {
+            // URL was provided
+            imagePath = imageUrl;
+        } else {
+            return res.redirect('/admin/dashboard?error=Please provide either an image file or URL');
+        }
+
         await Project.create({
             title,
             description,
-            image,
+            image: imagePath,
             tags: tags.split(',').map(tag => tag.trim()),
             link
         });
         res.redirect('/admin/dashboard?success=Project added successfully');
     } catch (error) {
         console.error('Add project error:', error);
-        res.redirect('/admin/dashboard?error=Failed to add project');
+        const errorMessage = error.message || 'Unknown error occurred';
+        res.redirect('/admin/dashboard?error=Failed to add project: ' + errorMessage);
+    }
+});
+
+
+
+// Edit Project - GET (show edit form)
+app.get('/admin/projects/edit/:id', requireAuth, async (req, res) => {
+    try {
+        const project = await Project.findById(req.params.id);
+        if (!project) {
+            return res.redirect('/admin/dashboard?error=Project not found');
+        }
+        res.render('admin/edit-project', { project, error: null, success: null });
+    } catch (error) {
+        console.error('Get project error:', error);
+        res.redirect('/admin/dashboard?error=Failed to load project');
+    }
+});
+
+// Edit Project - POST (update project)
+app.post('/admin/projects/edit/:id', requireAuth, uploadProjectImage, async (req, res) => {
+    try {
+        const { title, description, imageUrl, tags, link } = req.body;
+        const project = await Project.findById(req.params.id);
+
+        if (!project) {
+            return res.redirect('/admin/dashboard?error=Project not found');
+        }
+
+        // Determine image path
+        let imagePath = project.image; // Keep existing image by default
+        if (req.file) {
+            // New file was uploaded
+            imagePath = '/uploads/' + req.file.filename;
+        } else if (imageUrl && imageUrl.trim()) {
+            // New URL was provided
+            imagePath = imageUrl;
+        }
+
+        await Project.findByIdAndUpdate(req.params.id, {
+            title,
+            description,
+            image: imagePath,
+            tags: tags.split(',').map(tag => tag.trim()),
+            link
+        });
+
+        res.redirect('/admin/dashboard?success=Project updated successfully');
+    } catch (error) {
+        console.error('Update project error:', error);
+        res.redirect('/admin/dashboard?error=Failed to update project');
+    }
+});
+
+// Delete Project
+// Delete Project
+app.post('/admin/projects/delete/:id', requireAuth, async (req, res) => {
+    try {
+        await Project.findByIdAndDelete(req.params.id);
+        res.redirect('/admin/dashboard?success=Project deleted successfully');
+    } catch (error) {
+        console.error('Delete project error:', error);
+        res.redirect('/admin/dashboard?error=Failed to delete project');
+    }
+});
+
+// Add Skill
+app.post('/admin/skills/add', requireAuth, async (req, res) => {
+    try {
+        const { name, category, icon } = req.body;
+        await Skill.create({ name, category, icon });
+        res.redirect('/admin/dashboard?success=Skill added successfully');
+    } catch (error) {
+        console.error('Add skill error:', error);
+        res.redirect('/admin/dashboard?error=Failed to add skill');
     }
 });
 
@@ -255,17 +378,6 @@ app.post('/admin/skills/delete/:id', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('Delete skill error:', error);
         res.redirect('/admin/dashboard?error=Failed to delete skill');
-    }
-});
-
-// Delete Project
-app.post('/admin/projects/delete/:id', requireAuth, async (req, res) => {
-    try {
-        await Project.findByIdAndDelete(req.params.id);
-        res.redirect('/admin/dashboard?success=Project deleted successfully');
-    } catch (error) {
-        console.error('Delete project error:', error);
-        res.redirect('/admin/dashboard?error=Failed to delete project');
     }
 });
 
